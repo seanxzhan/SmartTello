@@ -94,7 +94,7 @@ class FrontEnd(object):
                         override = True
                     elif event.key == K_RETURN:
                         override = False
-                    if override == True:
+                    if override:
                         self.keydown(event.key)
                 elif event.type == KEYUP:
                     self.keyup(event.key)
