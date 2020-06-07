@@ -6,6 +6,7 @@ import time
 import cv2
 import pygame
 from pygame.locals import *
+import os
 
 # constructing arguments and parsing arguments
 # ap = argparse.ArgumentParser()
@@ -55,7 +56,10 @@ class FrontEnd(object):
             if not showing:
                 break
 
+            # convert each frame into a blob
             (height, width) = cam.shape[:2]
+            blob = cv2.dnn.blobFromImage(cv2.resize(cam, (300, 300)), 1.0, (300, 300),
+                                         (104.0, 177.0, 123.0))
 
 
 
