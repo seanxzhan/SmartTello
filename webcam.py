@@ -41,8 +41,8 @@ class FrontEnd(object):
             frame = webcam.read()
             cv2.imshow("Webcam", frame)
             cam = webcam.frame
-            cv2.putText(cam, "body_detection: " + str(body_detection), (10, 30),
-                        cv2.FONT_HERSHEY_SIMPLEX, 0.9, (255, 255, 255), 2)
+            cv2.putText(cam, "body_detection: " + str(body_detection), 
+            (10, 30), cv2.FONT_HERSHEY_SIMPLEX, 0.9, (255, 255, 255), 2)
 
             for event in pygame.event.get():
                 if event.type == KEYDOWN:
@@ -58,8 +58,8 @@ class FrontEnd(object):
 
             # convert each frame into a blob
             (height, width) = cam.shape[:2]
-            blob = cv2.dnn.blobFromImage(cv2.resize(cam, (300, 300)), 1.0, (300, 300),
-                                         (104.0, 177.0, 123.0))
+            blob = cv2.dnn.blobFromImage(cv2.resize(cam, (300, 300)), 
+                1.0, (300, 300), (104.0, 177.0, 123.0))
 
 
 
