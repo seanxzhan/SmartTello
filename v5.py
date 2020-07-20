@@ -1,3 +1,6 @@
+# run:
+# python3 v5.py --prototxt deploy.prototxt.txt --model res10_300x300_ssd_iter_140000.caffemodel
+
 from djitellopy import Tello
 import cv2
 import pygame

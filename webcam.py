@@ -3,77 +3,84 @@ import sys
 import os
 import time
 import math
-import numpy as py
+import numpy as np
 from sys import platform
 import argparse
 from imutils.video import VideoStream
+import commands
 
-sys.path.append('C:\\Users\\seanz\\CS_Projects\\openpose\\build\\python\\openpose\\Release')
-os.environ['PATH'] = os.environ['PATH'] + ';' +\
-    'C:\\Users\\seanz\\CS_Projects\\openpose\\build\\x64\\Release' + ';' +\
-    'C:\\Users\\seanz\\CS_Projects\\openpose\\build\\bin'
-print(sys.path)
+dir_path = os.path.dirname(os.path.realpath(__file__))
+sys.path.append(dir_path + '/python/openpose/Release')
+os.environ['PATH'] = os.environ['PATH'] + ';' + \
+  dir_path + '/Release;' + dir_path + '/bin;'
 
 import pyopenpose as op
 
 def set_params():
-        params = dict()
-        params["logging_level"] = 3
-        params["output_resolution"] = "-1x-1"
-        params["net_resolution"] = "-1x368"
-        params["model_pose"] = "BODY_25"
-        params["alpha_pose"] = 0.6
-        params["scale_gap"] = 0.3
-        params["scale_number"] = 1
-        params["render_threshold"] = 0.05
-        # If GPU version is built, and multiple GPUs are available, set the ID here
-        params["num_gpu_start"] = 0
-        params["disable_blending"] = False
-        # Ensure you point to the correct path where models are located
-        params["model_folder"] = 'C:\\Users\\seanz\\CS_Projects\\openpose\\models'
-        return params
+  params = dict()
+  params["logging_level"] = 3
+  params["output_resolution"] = "-1x-1"
+  params["net_resolution"] = "-1x368"
+  params["model_pose"] = "BODY_25"
+  params["alpha_pose"] = 0.6
+  params["scale_gap"] = 0.3
+  params["scale_number"] = 1
+  params["render_threshold"] = 0.05
+  params["num_gpu_start"] = 0
+  params["disable_blending"] = False
+  params["model_folder"] = dir_path + '/models'
+  return params
+
 
 def main():
-        params = set_params()
+  params = set_params()
 
-        #Constructing OpenPose object allocates GPU memory
-        # openpose = OpenPose(params)
-        opWrapper = op.WrapperPython()
-        opWrapper.configure(params)
-        opWrapper.start()
+  opWrapper = op.WrapperPython()
+  opWrapper.configure(params)
+  opWrapper.start()
 
-        #Opening OpenCV stream
-        webcam = VideoStream(src=0).start()
+  webcam = VideoStream(src=0).start()
 
-        font = cv2.FONT_HERSHEY_SIMPLEX
+  font = cv2.FONT_HERSHEY_SIMPLEX
 
-        while True:
-                
-                # ret, img = stream.read()
-                frame = webcam.read()
+  while True:
+    frame = webcam.read()
+    datum = op.Datum()
+    datum.cvInputData = frame
+    opWrapper.emplaceAndPop([datum])
 
-                datum = op.Datum()
-                # imageToProcess = cv2.imread(frame)
-                datum.cvInputData = frame
-                opWrapper.emplaceAndPop([datum])
+    # cam = datum.cvOutputData
+    cam = frame
 
-                # Display the stream
-                cv2.putText(frame,'OpenPose using Python-OpenCV',(20,30), font, 1,(255,255,255),1,cv2.LINE_AA)
+    # print(type(datum.poseKeypoints))
+    # print(isinstance(datum.poseKeypoints, np.ndarray))
+    print(datum.poseKeypoints.size)
 
-                cv2.imshow('Human Pose Estimation', datum.cvOutputData)
+    # if (type(datum.poseKeypoints) == )
 
-                key = cv2.waitKey(1)
+    # nose position
+    noseX = datum.poseKeypoints[0][0][0]
+    noseY = datum.poseKeypoints[0][0][1]
+    cv2.circle(cam, (noseX, noseY), 5, (0, 255, 255))
+    # kPoints = datum.poseKeypoints[0, i, :, :]
 
-                if key==ord('q'):
-                        break
+    # Display the stream
+    cv2.putText(frame, 'OpenPose using Python-OpenCV', (20, 30),
+                font, 1, (255, 255, 255), 1, cv2.LINE_AA)
+    cv2.imshow('Human Pose Estimation', cam)
 
-        cv2.destroyAllWindows()
+    # keyboard interactions
+    key = cv2.waitKey(1)
+    if key == ord('q'):
+        break
+
+  cv2.destroyAllWindows()
 
 if __name__ == '__main__':
     main()
 
 
-# trained model method - way to slow
+# trained model method - way too slow
 
 # ap = argparse.ArgumentParser()
 # ap.add_argument("-p", "--prototxt", required=True,
@@ -100,10 +107,10 @@ if __name__ == '__main__':
 # threshold = 0.1
 
 # inWidth = 300
-# inHeight = 300 
+# inHeight = 300
 
 # blob = cv2.dnn.blobFromImage(
-#     cv2.resize(frame, (300, 300)), 1.0 / 255, (inWidth, inHeight), 
+#     cv2.resize(frame, (300, 300)), 1.0 / 255, (inWidth, inHeight),
 #     (104.0, 177.0, 123.0), swapRB=False, crop=False)
 
 # net.setInput(blob)
@@ -123,7 +130,7 @@ if __name__ == '__main__':
 #         cv2.circle(frame, (int(x), int(y)), 5, (0, 255, 255), thickness=-1, lineType=cv2.FILLED)
 #         cv2.putText(frame, "{}".format(i), (int(x), int(y)), cv2.FONT_HERSHEY_SIMPLEX, 0.5, (0, 0, 255), 3, lineType=cv2.LINE_AA)
 #         points.append((int(x), int(y)))
-#     else: 
+#     else:
 #         points.append(None)
 
 # for pair in POSE_PAIRS:
