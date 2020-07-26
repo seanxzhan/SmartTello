@@ -7,7 +7,6 @@ import numpy as np
 from sys import platform
 import argparse
 from imutils.video import VideoStream
-import commands
 
 dir_path = os.path.dirname(os.path.realpath(__file__))
 sys.path.append(dir_path + '/python/openpose/Release')
@@ -45,6 +44,7 @@ def main():
 
   while True:
     frame = webcam.read()
+    frame = cv2.resize(frame, (256, 144))
     datum = op.Datum()
     datum.cvInputData = frame
     opWrapper.emplaceAndPop([datum])
@@ -54,20 +54,25 @@ def main():
 
     # print(type(datum.poseKeypoints))
     # print(isinstance(datum.poseKeypoints, np.ndarray))
-    print(datum.poseKeypoints.size)
+    # print(datum.poseKeypoints.size)
 
     # if (type(datum.poseKeypoints) == )
 
     # nose position
-    noseX = datum.poseKeypoints[0][0][0]
-    noseY = datum.poseKeypoints[0][0][1]
-    cv2.circle(cam, (noseX, noseY), 5, (0, 255, 255))
+    if (isinstance(datum.poseKeypoints, np.ndarray) 
+      and datum.poseKeypoints.size == 75):
+        noseX = datum.poseKeypoints[0][0][0]
+        noseY = datum.poseKeypoints[0][0][1]
+        cv2.circle(cam, (noseX, noseY), 5, (0, 255, 255))
+
+    # noseX = datum.poseKeypoints[0][0][0]
+    # noseY = datum.poseKeypoints[0][0][1]
+    # cv2.circle(cam, (noseX, noseY), 5, (0, 255, 255))
     # kPoints = datum.poseKeypoints[0, i, :, :]
 
     # Display the stream
-    cv2.putText(frame, 'OpenPose using Python-OpenCV', (20, 30),
-                font, 1, (255, 255, 255), 1, cv2.LINE_AA)
-    cv2.imshow('Human Pose Estimation', cam)
+    # cv2.resize(cam, (256, 144))
+    cv2.imshow('Est', cam)
 
     # keyboard interactions
     key = cv2.waitKey(1)

@@ -3,6 +3,12 @@ Use the following command to install requirements.txt
 $ pip install -r requirements.txt
 ```
 
+TODO list:
+- get tello to fly while tracking my nose
+- keep same distance 
+- gestures (start by experimenting with webcam.py)
+
+
 Use conda environment
 
 The controls are:

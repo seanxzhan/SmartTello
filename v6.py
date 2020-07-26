@@ -36,10 +36,12 @@ def set_params():
 
 FPS = 15
 
+N = 30
+
 class Fly(object):
   def __init__(self):
     pygame.init()
-    self.screen = pygame.display.set_mode([960, 720])
+    self.screen = pygame.display.set_mode([256, 144])
     self.tello = Tello()
 
     # drone velocities
@@ -49,7 +51,9 @@ class Fly(object):
     self.yaw_velocity = 0
     self.speed = 10
     self.send_rc_control = False
-  
+
+    pygame.time.set_timer(USEREVENT + 1, 50)
+
   def run(self):  
     # setup 
     if not self.tello.connect():
@@ -78,6 +82,7 @@ class Fly(object):
     time.sleep(2.0)
     font = cv2.FONT_HERSHEY_SIMPLEX
     should_stop = False
+    override = True
     while not should_stop:
       # keyboard interactions
       for event in pygame.event.get():
@@ -89,18 +94,23 @@ class Fly(object):
         elif event.type == KEYDOWN:
           if event.key == K_ESCAPE:
             should_stop = True
+          # if override == True:
+          self.keydown(event.key)
+        elif event.type == KEYUP:
+          self.keyup(event.key)
 
       if frame_read.stopped:
         frame_read.stop()
         break
 
       # telementry values
-      # batt = self.tello.get_battery()
+
       # flytime = self.tello.get_flight_time()
     
       # process frame read from tello drone
 
       cam = frame_read.frame
+      cam = cv2.resize(cam, (426, 240))
       datum = op.Datum()
       datum.cvInputData = cam
       opWrapper.emplaceAndPop([datum])
@@ -110,10 +120,49 @@ class Fly(object):
         noseX = datum.poseKeypoints[0][0][0]
         noseY = datum.poseKeypoints[0][0][1]
         cv2.circle(cam, (noseX, noseY), 5, (0, 255, 255))
+      
+      batt = self.tello.get_battery()
+      cv2.putText(cam, "Battery %: " + str(batt), (10, 30), cv2.FONT_HERSHEY_SIMPLEX, 0.9,
+            (255, 255, 255), 2)
 
       cv2.imshow('Good Tello', cam)
       time.sleep(1 / FPS)
     self.tello.end()
+
+  def keydown(self, key):
+    if key == pygame.K_UP:  # set forward velocity
+      print(self.send_rc_control)
+      self.for_back_velocity = N
+    elif key == pygame.K_DOWN:  # set backward velocity
+      self.for_back_velocity = -N
+    elif key == pygame.K_LEFT:  # set left velocity
+      self.left_right_velocity = -N
+    elif key == pygame.K_RIGHT:  # set right velocity
+      self.left_right_velocity = N
+    elif key == pygame.K_w:  # set up velocity
+      self.up_down_velocity = N
+    elif key == pygame.K_s:  # set down velocity
+      self.up_down_velocity = -N
+    elif key == pygame.K_a:  # set yaw clockwise velocity
+      self.yaw_velocity = -N
+    elif key == pygame.K_d:  # set yaw counter clockwise velocity
+      self.yaw_velocity = N
+
+  def keyup(self, key):
+    if key == pygame.K_UP or key == pygame.K_DOWN:  # set zero forward/backward velocity
+      self.for_back_velocity = 0
+    elif key == pygame.K_LEFT or key == pygame.K_RIGHT:  # set zero left/right velocity
+      self.left_right_velocity = 0
+    elif key == pygame.K_w or key == pygame.K_s:  # set zero up/down velocity
+      self.up_down_velocity = 0
+    elif key == pygame.K_a or key == pygame.K_d:  # set zero yaw velocity
+      self.yaw_velocity = 0
+    elif key == pygame.K_t:  # takeoff
+      self.tello.takeoff()
+      self.send_rc_control = True
+    elif key == pygame.K_l:  # land
+      self.tello.land()
+      self.send_rc_control = False
 
   def update(self):
     if self.send_rc_control:
