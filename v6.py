@@ -34,7 +34,7 @@ def set_params():
   params["model_folder"] = dir_path + '/models'
   return params
 
-FPS = 15
+FPS = 30
 
 N = 30
 
@@ -94,8 +94,10 @@ class Fly(object):
         elif event.type == KEYDOWN:
           if event.key == K_ESCAPE:
             should_stop = True
-          # if override == True:
-          self.keydown(event.key)
+          elif event.key == K_RETURN:
+            override = not override
+          if override == True:
+            self.keydown(event.key)
         elif event.type == KEYUP:
           self.keyup(event.key)
 
@@ -110,20 +112,52 @@ class Fly(object):
       # process frame read from tello drone
 
       cam = frame_read.frame
-      cam = cv2.resize(cam, (426, 240))
+      cam = cv2.resize(cam, (400, 300))
       datum = op.Datum()
       datum.cvInputData = cam
       opWrapper.emplaceAndPop([datum])
+
+      boxL = 150
+      boxR = 250
+      boxU = 100
+      boxD = 200 
+
+      cv2.rectangle(cam, (boxL, boxU), (boxR, boxD), (255, 255, 255), 1)
 
       if (isinstance(datum.poseKeypoints, np.ndarray) 
             and datum.poseKeypoints.size == 75):
         noseX = datum.poseKeypoints[0][0][0]
         noseY = datum.poseKeypoints[0][0][1]
-        cv2.circle(cam, (noseX, noseY), 5, (0, 255, 255))
+        cv2.circle(cam, (noseX, noseY), 5, (0, 0, 0))
+
+        if (not override):
+  
+          if (noseX < boxL):
+            self.yaw_velocity = -12
+            # self.left_right_velocity = 8
+          elif (noseX > boxR):
+            self.yaw_velocity = 12
+          else: 
+            self.up_down_velocity = 0
+            self.left_right_velocity = 0
+            self.for_back_velocity = 0
+            self.yaw_velocity = 0
+
+          if (noseY > boxU):
+            self.up_down_velocity = -12
+          elif (noseY < boxD):
+            self.up_down_velocity = 12
+          else:
+            self.up_down_velocity = 0
+            self.left_right_velocity = 0
+            self.for_back_velocity = 0
+            self.yaw_velocity = 0        
       
       batt = self.tello.get_battery()
-      cv2.putText(cam, "Battery %: " + str(batt), (10, 30), cv2.FONT_HERSHEY_SIMPLEX, 0.9,
-            (255, 255, 255), 2)
+      cv2.putText(cam, "Battery %: " + str(batt), (10, 30), cv2.FONT_HERSHEY_SIMPLEX, 0.5,
+        (255, 255, 255), 2)
+      cv2.putText(cam, "Manual: " + str(override), (10, 40), cv2.FONT_HERSHEY_SIMPLEX, 0.5,
+        (255, 255, 255), 2)
 
       cv2.imshow('Good Tello', cam)
       time.sleep(1 / FPS)
