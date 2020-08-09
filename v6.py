@@ -96,6 +96,7 @@ class Fly(object):
             should_stop = True
           elif event.key == K_RETURN:
             override = not override
+          # manual control 
           if override == True:
             self.keydown(event.key)
         elif event.type == KEYUP:
@@ -130,8 +131,19 @@ class Fly(object):
         noseY = datum.poseKeypoints[0][0][1]
         cv2.circle(cam, (noseX, noseY), 5, (0, 0, 0))
 
+        neckX = datum.poseKeypoints[0][1][0]
+        neckY = datum.poseKeypoints[0][1][1]
+        cv2.circle(cam, (neckX, neckY), 5, (0, 255, 255))
+
+        rWristX = datum.poseKeypoints[0][4][0]
+        rWristY = datum.poseKeypoints[0][4][1]
+        cv2.circle(cam, (rWristX, rWristY), 5, (0, 255, 255))
+
+        lWristX = datum.poseKeypoints[0][7][0]
+        lWristY = datum.poseKeypoints[0][7][1]
+        cv2.circle(cam, (lWristX, lWristY), 5, (0, 255, 255))
+
         if (not override):
-  
           if (noseX < boxL):
             self.yaw_velocity = -12
             # self.left_right_velocity = 8
@@ -144,15 +156,25 @@ class Fly(object):
             self.yaw_velocity = 0
 
           if (noseY > boxU):
-            self.up_down_velocity = -12
+            self.up_down_velocity = -16
           elif (noseY < boxD):
-            self.up_down_velocity = 12
+            self.up_down_velocity = 16
           else:
             self.up_down_velocity = 0
             self.left_right_velocity = 0
             self.for_back_velocity = 0
-            self.yaw_velocity = 0        
-      
+            self.yaw_velocity = 0
+
+          if (self.right_hand_up(cam, (noseX, noseY), (neckX, neckY), (rWristX, rWristY))):
+            self.left_right_velocity = -12
+          elif (self.left_hand_up(cam, (noseX, noseY), (neckX, neckY), (lWristX, lWristY))):
+            self.left_right_velocity = 12
+          else:
+            self.up_down_velocity = 0
+            self.left_right_velocity = 0
+            self.for_back_velocity = 0
+            self.yaw_velocity = 0
+
       batt = self.tello.get_battery()
       cv2.putText(cam, "Battery %: " + str(batt), (10, 30), cv2.FONT_HERSHEY_SIMPLEX, 0.5,
         (255, 255, 255), 2)
@@ -162,6 +184,44 @@ class Fly(object):
       cv2.imshow('Good Tello', cam)
       time.sleep(1 / FPS)
     self.tello.end()
+
+  # input: tuples representing coordinates (x-coor, y-coor)
+  def right_hand_up(self, cam, nose, neck, wrist):
+    nose_neck = (nose[1]-neck[1])/(nose[0]-neck[0])
+    neck_wrist = (neck[1]-wrist[1])/(neck[0]-wrist[0])
+    cv2.line(cam, nose, neck, (0, 0, 0), 1)
+    cv2.line(cam, neck, wrist, (0, 0, 0), 1)
+
+    angle = np.arctan(abs((nose_neck - neck_wrist)/(1 + nose_neck*neck_wrist))) * 180 / np.pi
+    # cv2.putText(cam, "r_angle: " + str(angle), (10, 50), cv2.FONT_HERSHEY_SIMPLEX, 0.5,
+    #     (0, 0, 0), 1)
+    if (angle < 105 and angle > 75):
+      cv2.putText(cam, "r_TRUE", (10, 60), cv2.FONT_HERSHEY_SIMPLEX, 0.5,
+      (0, 0, 0), 1)
+      return True
+    else:
+      cv2.putText(cam, "r_FALSE", (10, 60), cv2.FONT_HERSHEY_SIMPLEX, 0.5,
+      (0, 0, 0), 1)
+      return False
+
+  # input: tuples representing coordinates (x-coor, y-coor)
+  def left_hand_up(self, cam, nose, neck, wrist):
+    nose_neck = (nose[1]-neck[1])/(nose[0]-neck[0])
+    neck_wrist = (neck[1]-wrist[1])/(neck[0]-wrist[0])
+    cv2.line(cam, nose, neck, (0, 0, 0), 1)
+    cv2.line(cam, neck, wrist, (0, 0, 0), 1)
+
+    angle = np.arctan(abs((nose_neck - neck_wrist)/(1 + nose_neck*neck_wrist))) * 180 / np.pi
+    # cv2.putText(cam, "l_angle: " + str(angle), (10, 70), cv2.FONT_HERSHEY_SIMPLEX, 0.5,
+    #     (0, 0, 0), 1)
+    if (angle < 105 and angle > 75):
+      cv2.putText(cam, "l_TRUE", (10, 80), cv2.FONT_HERSHEY_SIMPLEX, 0.5,
+      (0, 0, 0), 1)
+      return True
+    else:
+      cv2.putText(cam, "l_FALSE", (10, 80), cv2.FONT_HERSHEY_SIMPLEX, 0.5,
+      (0, 0, 0), 1)
+      return False
 
   def keydown(self, key):
     if key == pygame.K_UP:  # set forward velocity

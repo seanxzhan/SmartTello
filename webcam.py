@@ -44,7 +44,7 @@ def main():
 
   while True:
     frame = webcam.read()
-    frame = cv2.resize(frame, (256, 144))
+    frame = cv2.resize(frame, (400, 300))
     datum = op.Datum()
     datum.cvInputData = frame
     opWrapper.emplaceAndPop([datum])
@@ -65,6 +65,22 @@ def main():
         noseY = datum.poseKeypoints[0][0][1]
         cv2.circle(cam, (noseX, noseY), 5, (0, 255, 255))
 
+        neckX = datum.poseKeypoints[0][1][0]
+        neckY = datum.poseKeypoints[0][1][1]
+        cv2.circle(cam, (neckX, neckY), 5, (0, 255, 255))
+
+        rWristX = datum.poseKeypoints[0][4][0]
+        rWristY = datum.poseKeypoints[0][4][1]
+        cv2.circle(cam, (rWristX, rWristY), 5, (0, 255, 255))
+
+        right_hand_up(cam, (noseX, noseY), (neckX, neckY), (rWristX, rWristY))
+
+        lWristX = datum.poseKeypoints[0][7][0]
+        lWristY = datum.poseKeypoints[0][7][1]
+        cv2.circle(cam, (lWristX, lWristY), 5, (0, 255, 255))
+
+        left_hand_up(cam, (noseX, noseY), (neckX, neckY), (lWristX, lWristY))
+
     # noseX = datum.poseKeypoints[0][0][0]
     # noseY = datum.poseKeypoints[0][0][1]
     # cv2.circle(cam, (noseX, noseY), 5, (0, 255, 255))
@@ -80,6 +96,39 @@ def main():
         break
 
   cv2.destroyAllWindows()
+
+def right_hand_up(cam, nose, neck, wrist):
+  nose_neck = (nose[1]-neck[1])/(nose[0]-neck[0])
+  neck_wrist = (neck[1]-wrist[1])/(neck[0]-wrist[0])
+  cv2.line(cam, nose, neck, (0, 0, 0), 1)
+  cv2.line(cam, neck, wrist, (0, 0, 0), 1)
+
+  angle = np.arctan(abs((nose_neck - neck_wrist)/(1 + nose_neck*neck_wrist))) * 180 / np.pi
+  # cv2.putText(cam, "r_angle: " + str(angle), (10, 50), cv2.FONT_HERSHEY_SIMPLEX, 0.5,
+  #     (0, 0, 0), 1)
+  if (angle < 100 and angle > 80):
+    cv2.putText(cam, "r_TRUE", (10, 60), cv2.FONT_HERSHEY_SIMPLEX, 0.5,
+    (0, 0, 0), 1)
+  else:
+    cv2.putText(cam, "r_FALSE", (10, 60), cv2.FONT_HERSHEY_SIMPLEX, 0.5,
+    (0, 0, 0), 1)
+
+def left_hand_up(cam, nose, neck, wrist):
+  nose_neck = (nose[1]-neck[1])/(nose[0]-neck[0])
+  neck_wrist = (neck[1]-wrist[1])/(neck[0]-wrist[0])
+  cv2.line(cam, nose, neck, (0, 0, 0), 1)
+  cv2.line(cam, neck, wrist, (0, 0, 0), 1)
+
+  angle = np.arctan(abs((nose_neck - neck_wrist)/(1 + nose_neck*neck_wrist))) * 180 / np.pi
+  # cv2.putText(cam, "l_angle: " + str(angle), (10, 70), cv2.FONT_HERSHEY_SIMPLEX, 0.5,
+  #     (0, 0, 0), 1)
+  if (angle < 100 and angle > 80):
+    cv2.putText(cam, "l_TRUE", (10, 80), cv2.FONT_HERSHEY_SIMPLEX, 0.5,
+    (0, 0, 0), 1)
+  else:
+    cv2.putText(cam, "l_FALSE", (10, 80), cv2.FONT_HERSHEY_SIMPLEX, 0.5,
+    (0, 0, 0), 1)
+  
 
 if __name__ == '__main__':
     main()
